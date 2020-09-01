@@ -43,9 +43,9 @@ namespace WebApi.Controlers
         [HttpGet]
         [Authorize]
         [Route("{uf}")]
-        public async Task<ActionResult<Cliente>> GetByUF([FromServices] DataContext context, string uf)
+        public async Task<ActionResult<List<Cliente>>> GetByUF([FromServices] DataContext context, string uf)
         {
-            var cliente = await context.Cliente.FirstOrDefaultAsync(x => x.UF.Equals(uf));
+            var cliente = await context.Cliente.Where(x => x.UF.Equals(uf)).ToListAsync();
             return cliente;
         }
 
@@ -62,7 +62,7 @@ namespace WebApi.Controlers
             {
                 context.Cliente.Add(model);
                 await context.SaveChangesAsync();
-                return model;
+                return Ok("Salvo com sucesso!");
             }
             else
             {
@@ -71,14 +71,22 @@ namespace WebApi.Controlers
 
         }
 
-
-        //Método falho, a corrigir. (BAIXO)
-        [HttpPut("{id}")]
-        public async Task<ActionResult<Cliente>> Put([FromServices] DataContext context, int id)
+        //Rota autorizada para a alteração de um item pelo ID
+        //lovalhost/system/clientes/ ID desejado
+        [HttpPut()]
+        [Authorize]
+        [Route("{id:int}")]
+        public async Task<ActionResult<Cliente>> Put([FromServices] DataContext context, [FromBody] Cliente model
+            , int id)
         {
             var cliente = await context.Cliente.FirstOrDefaultAsync(x => x.ID == id);
 
             context.Entry(cliente).State = EntityState.Modified;
+
+            cliente.Nome = model.Nome;
+            cliente.CPF = model.CPF;
+            cliente.Data = model.Data;
+            cliente.UF = model.UF;
 
             context.Cliente.Update(cliente);
             
@@ -87,11 +95,11 @@ namespace WebApi.Controlers
 
             return  cliente;
         }
-        //Método falho, a corrigir. (CIMA)
+        
 
 
         //Rota autorizada para deletar um item atraves do ID
-        //localhost/system/clientes/ID desejado
+        //localhost/system/clientes/ ID desejado
         [HttpDelete]
         [Authorize]
         [Route("{id:int}")]
